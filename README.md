@@ -7,7 +7,8 @@ and still very early stages.
 # Obsidian Helix Keybindings
 
 This plugin enables [Helix](https://helix-editor.com/) keybindings in [Obsidian.md](https://obsidian.md/) using the [Helix CodeMirror6 extension by jrvidal](https://gitlab.com/_rvidal/codemirror-helix).
-This plugin simply adds the extension to the editor, all credit goes to [jrvidal](https://github.com/jrvidal) for actually implementing the extension.
+
+This plugin extends the core `codemirror-helix` extension with additional keybindings that were missing from the original implementation, providing a more complete Helix editing experience. See [KEYBINDINGS.md](KEYBINDINGS.md) for a full list of available keybindings.
 
 Keep in mind the CM6 extension is in a very early stage of development.
 
@@ -35,6 +36,19 @@ Two ways to do this are using BRAT or manually.
 
 1) Make sure Vim keybindings are disabled in `Options->Editor->Advanced`.
 2) Enable Helix keybindings in the plugin settings or toggle them via the command.
+
+## Features
+
+### Additional Keybindings
+
+This plugin now includes additional Helix keybindings that supplement the core `codemirror-helix` extension:
+
+- **Word movement**: `e`, `W`, `B`, `E` for more precise word navigation
+- **Selection commands**: `s`, `S`, `Alt-s`, `X` for advanced text selection
+- **Editing commands**: `C` (copy line), `G` (goto line)
+- **Insert mode enhancements**: `Ctrl-w`, `Alt-d`, `Ctrl-u`, `Ctrl-k`, `Ctrl-h`, `Ctrl-d` for faster editing
+
+You can enable or disable these additional keybindings in the plugin settings. See [KEYBINDINGS.md](KEYBINDINGS.md) for a complete reference.
 
 ### Customize cursor color
 

@@ -2,16 +2,19 @@ import { App, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { helix } from 'codemirror-helix';
 import { Extension, Prec } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
+import { additionalHelixKeymap } from './helix-keymap';
 
 interface HelixSettings {
 	enableHelixKeybindings: boolean;
 	cursorInInsertMode: "block" | "bar";
+	enableAdditionalKeybindings: boolean;
 }
 
 const DEFAULT_SETTINGS: HelixSettings = {
 	enableHelixKeybindings: false,
 	// Following the defualt Obsidian behavior, instead of the Helix one.
 	cursorInInsertMode: "bar",
+	enableAdditionalKeybindings: true,
 }
 
 export default class HelixPlugin extends Plugin {
@@ -58,6 +61,10 @@ export default class HelixPlugin extends Plugin {
 					"editor.cursor-shape.insert": this.settings.cursorInInsertMode,
 				}
 			})));
+			// Add additional keybindings if enabled
+			if (this.settings.enableAdditionalKeybindings) {
+				this.extensions.push(additionalHelixKeymap());
+			}
 		}
 		await this.saveSettings();
 		if (reload) this.app.workspace.updateOptions();
@@ -106,6 +113,18 @@ class HelixSettingsTab extends PluginSettingTab {
 						await this.plugin.reload();
 					}
 				});
+			});
+		new Setting(containerEl)
+			.setName('Enable additional keybindings')
+			.setDesc('Enable additional Helix keybindings not in codemirror-helix (e, W, B, E, s, S, X, C, G, etc.)')
+			.addToggle(toggle => {
+				toggle
+					.setValue(this.plugin.settings.enableAdditionalKeybindings)
+					.onChange(async (value) => {
+						this.plugin.settings.enableAdditionalKeybindings = value;
+						await this.plugin.saveSettings();
+						await this.plugin.reload();
+					});
 			});
 	}
 }
