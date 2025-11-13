@@ -12,9 +12,17 @@ import {
  * These supplement the core keybindings to match the official Helix editor
  */
 
+// Precompiled regex patterns for performance
+const WHITESPACE = /\s/;
+const NON_WHITESPACE = /\S/;
+
 /**
  * Check if editor is in insert mode by examining helix's mode field
  * Mode types: 0 = Normal, 1 = Insert, 4 = Select
+ *
+ * IMPORTANT: If mode detection fails, returns false (assumes normal mode).
+ * This is safer than assuming insert mode, as it prevents normal-mode commands
+ * from interfering with typing.
  */
 function isInsertMode(view: EditorView): boolean {
 	try {
@@ -33,12 +41,15 @@ function isInsertMode(view: EditorView): boolean {
 			}
 		}
 
-		// Fallback: check if selection is a cursor (empty selection = likely insert mode)
-		// This is not perfect but better than assuming true
-		return view.state.selection.main.empty;
-	} catch {
-		// If we can't determine mode, assume insert mode to not break functionality
-		return true;
+		// Fallback: Could not find helix mode field
+		// Return false (assume normal mode) to prevent interference with typing
+		// This means insert-mode-only commands won't work, but it's safer
+		console.warn('obsidian-helix: Could not detect helix mode field, assuming normal mode');
+		return false;
+	} catch (error) {
+		// If we can't determine mode, assume normal mode (safer default)
+		console.error('obsidian-helix: Error detecting insert mode:', error);
+		return false;
 	}
 }
 
@@ -50,6 +61,7 @@ function isInsertMode(view: EditorView): boolean {
  * Move to the end of the next word (e)
  */
 export function moveNextWordEnd(view: EditorView): boolean {
+	if (isInsertMode(view)) return false;
 	const { state } = view;
 	const selection = state.selection;
 
@@ -57,8 +69,8 @@ export function moveNextWordEnd(view: EditorView): boolean {
 		selection: EditorSelection.create(
 			selection.ranges.map(range => {
 				let pos = range.head;
-				const line = state.doc.lineAt(pos);
-				const text = state.doc.sliceString(pos, line.to);
+				let line = state.doc.lineAt(pos);
+				let text = state.doc.sliceString(pos, line.to);
 
 				let i = 0;
 				// Skip whitespace if we're on it
@@ -66,10 +78,30 @@ export function moveNextWordEnd(view: EditorView): boolean {
 				// Move to end of current/next word
 				while (i < text.length && /\S/.test(text[i])) i++;
 
-				// If we didn't move, we must be at the end of the line
-				if (i === 0 && line.number < state.doc.lines) {
-					const nextLine = state.doc.line(line.number + 1);
-					return EditorSelection.cursor(nextLine.from);
+				// If we didn't move on this line, try next non-empty line
+				if (i === 0) {
+					// Search for next line with content
+					let currentLine = line.number;
+					while (currentLine < state.doc.lines) {
+						currentLine++;
+						const nextLine = state.doc.line(currentLine);
+						const nextText = state.doc.sliceString(nextLine.from, nextLine.to);
+
+						// Skip empty lines
+						if (nextText.trim().length === 0) continue;
+
+						// Find first word end on this line
+						let j = 0;
+						while (j < nextText.length && /\s/.test(nextText[j])) j++;
+						while (j < nextText.length && /\S/.test(nextText[j])) j++;
+
+						if (j > 0) {
+							return EditorSelection.cursor(nextLine.from + j);
+						}
+					}
+
+					// At end of document, stay at current position
+					return EditorSelection.cursor(pos);
 				}
 
 				return EditorSelection.cursor(Math.min(pos + i, state.doc.length));
@@ -86,6 +118,7 @@ export function moveNextWordEnd(view: EditorView): boolean {
  * Move to next WORD start (W) - whitespace-delimited
  */
 export function moveNextLongWordStart(view: EditorView): boolean {
+	if (isInsertMode(view)) return false;
 	const { state } = view;
 	const selection = state.selection;
 
@@ -122,6 +155,7 @@ export function moveNextLongWordStart(view: EditorView): boolean {
  * Move to previous WORD start (B) - whitespace-delimited
  */
 export function movePrevLongWordStart(view: EditorView): boolean {
+	if (isInsertMode(view)) return false;
 	const { state } = view;
 	const selection = state.selection;
 
@@ -143,9 +177,29 @@ export function movePrevLongWordStart(view: EditorView): boolean {
 				// Move forward to start of word if we're in whitespace
 				if (i > 0 && /\s/.test(text[i])) i++;
 
+				// If we didn't move on this line, try previous non-empty line
 				if (i === text.length - 1 && line.number > 1) {
-					const prevLine = state.doc.line(line.number - 1);
-					return EditorSelection.cursor(prevLine.from);
+					// Search backwards for previous line with content
+					let currentLine = line.number;
+					while (currentLine > 1) {
+						currentLine--;
+						const prevLine = state.doc.line(currentLine);
+						const prevText = state.doc.sliceString(prevLine.from, prevLine.to);
+
+						// Skip empty lines
+						if (prevText.trim().length === 0) continue;
+
+						// Find last WORD start on this line
+						let j = prevText.length - 1;
+						while (j > 0 && /\s/.test(prevText[j])) j--;
+						while (j > 0 && !/\s/.test(prevText[j])) j--;
+						if (j > 0 && /\s/.test(prevText[j])) j++;
+
+						return EditorSelection.cursor(prevLine.from + j);
+					}
+
+					// At start of document, go to position 0
+					return EditorSelection.cursor(0);
 				}
 
 				return EditorSelection.cursor(line.from + i);
@@ -162,6 +216,7 @@ export function movePrevLongWordStart(view: EditorView): boolean {
  * Move to next WORD end (E) - whitespace-delimited
  */
 export function moveNextLongWordEnd(view: EditorView): boolean {
+	if (isInsertMode(view)) return false;
 	const { state } = view;
 	const selection = state.selection;
 
@@ -169,8 +224,8 @@ export function moveNextLongWordEnd(view: EditorView): boolean {
 		selection: EditorSelection.create(
 			selection.ranges.map(range => {
 				let pos = range.head;
-				const line = state.doc.lineAt(pos);
-				const text = state.doc.sliceString(pos, line.to);
+				let line = state.doc.lineAt(pos);
+				let text = state.doc.sliceString(pos, line.to);
 
 				let i = 0;
 				// Skip whitespace if we're on it
@@ -178,10 +233,30 @@ export function moveNextLongWordEnd(view: EditorView): boolean {
 				// Move to end of current/next WORD
 				while (i < text.length && !/\s/.test(text[i])) i++;
 
-				// If we didn't move, we must be at the end of the line
-				if (i === 0 && line.number < state.doc.lines) {
-					const nextLine = state.doc.line(line.number + 1);
-					return EditorSelection.cursor(nextLine.from);
+				// If we didn't move on this line, try next non-empty line
+				if (i === 0) {
+					// Search for next line with content
+					let currentLine = line.number;
+					while (currentLine < state.doc.lines) {
+						currentLine++;
+						const nextLine = state.doc.line(currentLine);
+						const nextText = state.doc.sliceString(nextLine.from, nextLine.to);
+
+						// Skip empty lines
+						if (nextText.trim().length === 0) continue;
+
+						// Find first WORD end on this line
+						let j = 0;
+						while (j < nextText.length && /\s/.test(nextText[j])) j++;
+						while (j < nextText.length && !/\s/.test(nextText[j])) j++;
+
+						if (j > 0) {
+							return EditorSelection.cursor(nextLine.from + j);
+						}
+					}
+
+					// At end of document, stay at current position
+					return EditorSelection.cursor(pos);
 				}
 
 				return EditorSelection.cursor(Math.min(pos + i, state.doc.length));
@@ -200,12 +275,17 @@ export function moveNextLongWordEnd(view: EditorView): boolean {
 
 /**
  * Split selection on newlines (Alt-s)
+ *
+ * NOTE: New selections are always created in forward direction (anchor < head)
+ * regardless of original selection direction. This is consistent with Helix behavior.
  */
 export function splitSelectionOnNewline(view: EditorView): boolean {
+	if (isInsertMode(view)) return false;
 	const { state } = view;
 	const ranges: SelectionRange[] = [];
 
 	for (const range of state.selection.ranges) {
+		// Use normalized from/to (always left-to-right)
 		const text = state.sliceDoc(range.from, range.to);
 		const lines = text.split('\n');
 		let pos = range.from;
@@ -235,6 +315,7 @@ export function splitSelectionOnNewline(view: EditorView): boolean {
  * Splits selection on whitespace. Does not support regex patterns.
  */
 export function splitSelection(view: EditorView): boolean {
+	if (isInsertMode(view)) return false;
 	const { state } = view;
 	const ranges: SelectionRange[] = [];
 
@@ -268,8 +349,11 @@ export function splitSelection(view: EditorView): boolean {
 
 /**
  * Extend to line bounds (X)
+ *
+ * NOTE: EditorSelection.create() automatically handles merging overlapping ranges
  */
 export function extendToLineBounds(view: EditorView): boolean {
+	if (isInsertMode(view)) return false;
 	const { state } = view;
 
 	view.dispatch({
@@ -289,12 +373,18 @@ export function extendToLineBounds(view: EditorView): boolean {
 
 /**
  * Copy selection on next line (C)
+ *
+ * NOTE: Calculates all positions before applying changes, then uses CodeMirror's
+ * automatic position mapping to place selections correctly after insertions.
  */
 export function copySelectionOnNextLine(view: EditorView): boolean {
+	if (isInsertMode(view)) return false;
 	const { state } = view;
 	const changes: ChangeSpec[] = [];
-	const newRanges: SelectionRange[] = [];
-	let offset = 0;
+	let cumulativeOffset = 0;
+
+	// First pass: create changes and track cumulative offset
+	const changeInfo: Array<{ insertPos: number; textLength: number }> = [];
 
 	for (const range of state.selection.ranges) {
 		const startLine = state.doc.lineAt(range.from);
@@ -306,10 +396,21 @@ export function copySelectionOnNextLine(view: EditorView): boolean {
 			insert: state.lineBreak + text
 		});
 
-		// Calculate new cursor position after this insertion
-		const newStart = endLine.to + offset + state.lineBreak.length;
-		newRanges.push(EditorSelection.range(newStart, newStart + text.length));
-		offset += state.lineBreak.length + text.length;
+		changeInfo.push({
+			insertPos: endLine.to,
+			textLength: text.length
+		});
+	}
+
+	// Second pass: calculate new selection positions accounting for all prior insertions
+	const newRanges: SelectionRange[] = [];
+	let offset = 0;
+
+	for (const info of changeInfo) {
+		// Position after this insertion, accounting for all previous insertions
+		const newStart = info.insertPos + offset + state.lineBreak.length;
+		newRanges.push(EditorSelection.range(newStart, newStart + info.textLength));
+		offset += state.lineBreak.length + info.textLength;
 	}
 
 	if (changes.length > 0) {
@@ -326,22 +427,29 @@ export function copySelectionOnNextLine(view: EditorView): boolean {
 
 /**
  * Select regex (s)
- * Selects word at cursor. Does not prompt for regex pattern.
+ * Selects word at cursor. Does not prompt for regex pattern like real Helix.
+ *
+ * NOTE: This is a simplified implementation that:
+ * - Uses CodeMirror's word boundaries (may differ from Helix)
+ * - Returns false (no-op) if cursor is on whitespace or punctuation
+ * - Does not support regex pattern input
  */
 export function selectRegex(view: EditorView): boolean {
+	if (isInsertMode(view)) return false;
 	const { state } = view;
 	const range = state.selection.main;
 	const word = state.wordAt(range.head);
 
-	if (word) {
-		view.dispatch({
-			selection: EditorSelection.range(word.from, word.to),
-			scrollIntoView: true
-		});
-		return true;
+	// If no word at cursor (e.g., on whitespace), do nothing
+	if (!word) {
+		return false;
 	}
 
-	return false;
+	view.dispatch({
+		selection: EditorSelection.range(word.from, word.to),
+		scrollIntoView: true
+	});
+	return true;
 }
 
 // ============================================================================
@@ -353,6 +461,7 @@ export function selectRegex(view: EditorView): boolean {
  * Goes to last line, or specified line if lineNum provided.
  */
 export function gotoLine(view: EditorView, lineNum?: number): boolean {
+	if (isInsertMode(view)) return false;
 	const { state } = view;
 	const targetLine = lineNum ?? state.doc.lines;
 
@@ -418,7 +527,24 @@ export function deleteWordForward(view: EditorView): boolean {
 		while (i < lineText.length && /\s/.test(lineText[i])) i++;
 		while (i < lineText.length && /\S/.test(lineText[i])) i++;
 
-		const deleteTo = range.from + i;
+		let deleteTo = range.from + i;
+
+		// If we didn't find a word on this line, look at next line
+		if (deleteTo === range.from && line.number < state.doc.lines) {
+			const nextLine = state.doc.line(line.number + 1);
+			const nextText = state.doc.sliceString(nextLine.from, nextLine.to);
+
+			let j = 0;
+			while (j < nextText.length && /\s/.test(nextText[j])) j++;
+			while (j < nextText.length && /\S/.test(nextText[j])) j++;
+
+			if (j > 0) {
+				// Delete from cursor to end of word on next line
+				// This includes the newline
+				deleteTo = nextLine.from + j;
+			}
+		}
+
 		if (deleteTo > range.from) {
 			changes.push({ from: range.from, to: deleteTo });
 		}
@@ -474,8 +600,16 @@ export function deleteCharForwardCommand(view: EditorView): boolean {
 
 /**
  * Format selections (=)
- * Does nothing. Requires formatter or LSP integration.
+ *
+ * PLACEHOLDER: This command does nothing currently.
+ * In Helix, this would format code using a configured formatter.
+ * To implement this, you would need to:
+ * 1. Integrate with an external formatter (prettier, etc.)
+ * 2. Use Obsidian's command palette to trigger formatting
+ * 3. Implement LSP integration for language-specific formatting
  */
 export function formatSelections(view: EditorView): boolean {
+	if (isInsertMode(view)) return false;
+	// No-op: formatter not implemented
 	return true;
 }
