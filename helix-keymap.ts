@@ -25,7 +25,7 @@ import {
  * Implements commands missing from the core extension.
  */
 export function additionalHelixKeymap(): Extension {
-	return Prec.high(keymap.of([
+	return keymap.of([
 		// ====================================================================
 		// NORMAL MODE - WORD MOVEMENT
 		// ====================================================================
@@ -148,5 +148,5 @@ export function additionalHelixKeymap(): Extension {
 			key: 'Ctrl-d',
 			run: deleteCharForwardCommand
 		}
-	]));
+	]);
 }
