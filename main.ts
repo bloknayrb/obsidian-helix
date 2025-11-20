@@ -12,7 +12,7 @@ interface HelixSettings {
 
 const DEFAULT_SETTINGS: HelixSettings = {
 	enableHelixKeybindings: false,
-	// Following the defualt Obsidian behavior, instead of the Helix one.
+	// Following the default Obsidian behavior, instead of the Helix one.
 	cursorInInsertMode: "bar",
 	enableAdditionalKeybindings: true,
 }
@@ -65,11 +65,11 @@ export default class HelixPlugin extends Plugin {
 			if (this.settings.enableAdditionalKeybindings) {
 				this.extensions.push(additionalHelixKeymap());
 			}
-			this.extensions.push(Prec.high(helix({
+			this.extensions.push(helix({
 				config: {
 					"editor.cursor-shape.insert": this.settings.cursorInInsertMode,
 				}
-			})));
+			}));
 		}
 		await this.saveSettings();
 		if (reload) this.app.workspace.updateOptions();
