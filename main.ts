@@ -25,7 +25,7 @@ export default class HelixPlugin extends Plugin {
 		await this.loadSettings();
 		this.extensions = [];
 		this.addSettingTab(new HelixSettingsTab(this.app, this));
-		this.setEnabled(this.settings.enableHelixKeybindings, false);
+		await this.setEnabled(this.settings.enableHelixKeybindings, false);
 		this.registerEditorExtension(this.extensions);
 
 		this.addCommand({
