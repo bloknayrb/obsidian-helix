@@ -56,20 +56,28 @@ export default class HelixPlugin extends Plugin {
 		// Clear extensions array (will be repopulated below if enabled)
 		this.extensions.length = 0;
 		if (value) {
-			this.extensions.push(Prec.high(EditorView.theme({
-				".cm-hx-block-cursor .cm-hx-cursor": {
-					background: "var(--text-accent)",
-				},
-			})));
-			// Add additional keybindings BEFORE helix to allow overrides
-			if (this.settings.enableAdditionalKeybindings) {
-				this.extensions.push(additionalHelixKeymap());
-			}
-			this.extensions.push(helix({
-				config: {
-					"editor.cursor-shape.insert": this.settings.cursorInInsertMode,
+			try {
+				this.extensions.push(Prec.high(EditorView.theme({
+					".cm-hx-block-cursor .cm-hx-cursor": {
+						background: "var(--text-accent)",
+					},
+				})));
+				// Add additional keybindings BEFORE helix to allow overrides
+				if (this.settings.enableAdditionalKeybindings) {
+					this.extensions.push(additionalHelixKeymap());
 				}
-			}));
+				this.extensions.push(helix({
+					config: {
+						"editor.cursor-shape.insert": this.settings.cursorInInsertMode,
+					}
+				}));
+			} catch (error) {
+				console.error('obsidian-helix: Failed to initialize Helix extension:', error);
+				new Notice('Failed to enable Helix keybindings. Check console for details.');
+				this.settings.enableHelixKeybindings = false;
+				await this.saveSettings();
+				return;
+			}
 		}
 		await this.saveSettings();
 		if (reload) this.app.workspace.updateOptions();

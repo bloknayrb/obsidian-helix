@@ -1,5 +1,5 @@
 import { keymap } from '@codemirror/view';
-import { Extension, Prec } from '@codemirror/state';
+import { Extension } from '@codemirror/state';
 import {
 	moveNextWordEnd,
 	moveNextLongWordStart,

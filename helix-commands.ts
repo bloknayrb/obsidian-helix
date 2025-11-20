@@ -485,6 +485,7 @@ export function gotoLine(view: EditorView, lineNum?: number): boolean {
  * Delete word backward in insert mode (Ctrl-w)
  */
 export function deleteWordBackward(view: EditorView): boolean {
+	if (!isInsertMode(view)) return false;
 	const { state } = view;
 	const changes: ChangeSpec[] = [];
 
@@ -515,6 +516,7 @@ export function deleteWordBackward(view: EditorView): boolean {
  * Delete word forward in insert mode (Alt-d)
  */
 export function deleteWordForward(view: EditorView): boolean {
+	if (!isInsertMode(view)) return false;
 	const { state } = view;
 	const changes: ChangeSpec[] = [];
 
