@@ -1,20 +1,20 @@
 import { keymap } from '@codemirror/view';
 import { Extension } from '@codemirror/state';
 import {
-	moveNextLongWordStart,
-	movePrevLongWordStart,
-	moveNextLongWordEnd,
-	splitSelectionOnNewline,
-	splitSelection,
-	extendToLineBounds,
-	copySelectionOnNextLine,
-	gotoLine,
-	deleteWordBackward,
-	deleteWordForward,
-	killToLineStart,
-	killToLineEnd,
-	deleteCharBackwardCommand,
-	deleteCharForwardCommand
+    moveNextLongWordStart,
+    movePrevLongWordStart,
+    moveNextLongWordEnd,
+    splitSelectionOnNewline,
+    splitSelection,
+    extendToLineBounds,
+    copySelectionOnNextLine,
+    gotoLine,
+    deleteWordBackward,
+    deleteWordForward,
+    killToLineStart,
+    killToLineEnd,
+    deleteCharBackwardCommand,
+    deleteCharForwardCommand
 } from './helix-commands';
 
 /**
@@ -22,109 +22,109 @@ import {
  * Implements commands missing from the core extension.
  */
 export function additionalHelixKeymap(): Extension {
-	return keymap.of([
-		// ====================================================================
-		// NORMAL MODE - WORD MOVEMENT
-		// ====================================================================
+    return keymap.of([
+        // ====================================================================
+        // NORMAL MODE - WORD MOVEMENT
+        // ====================================================================
 
-		// W - move to next WORD (whitespace-delimited)
-		{
-			key: 'Shift-w',
-			run: moveNextLongWordStart
-		},
+        // W - move to next WORD (whitespace-delimited)
+        {
+            key: 'Shift-w',
+            run: moveNextLongWordStart
+        },
 
-		// B - move to previous WORD (whitespace-delimited)
-		{
-			key: 'Shift-b',
-			run: movePrevLongWordStart
-		},
+        // B - move to previous WORD (whitespace-delimited)
+        {
+            key: 'Shift-b',
+            run: movePrevLongWordStart
+        },
 
-		// E - move to end of next WORD (whitespace-delimited)
-		{
-			key: 'Shift-e',
-			run: moveNextLongWordEnd
-		},
+        // E - move to end of next WORD (whitespace-delimited)
+        {
+            key: 'Shift-e',
+            run: moveNextLongWordEnd
+        },
 
-		// ====================================================================
-		// NORMAL MODE - SELECTION
-		// ====================================================================
+        // ====================================================================
+        // NORMAL MODE - SELECTION
+        // ====================================================================
 
-		// Alt-s - split selection on newlines
-		{
-			key: 'Alt-s',
-			run: splitSelectionOnNewline
-		},
+        // Alt-s - split selection on newlines
+        {
+            key: 'Alt-s',
+            run: splitSelectionOnNewline
+        },
 
-		// S - split selection (on whitespace as basic implementation)
-		{
-			key: 'Shift-s',
-			run: splitSelection
-		},
+        // S - split selection (on whitespace as basic implementation)
+        {
+            key: 'Shift-s',
+            run: splitSelection
+        },
 
-		// X - extend to line bounds
-		{
-			key: 'Shift-x',
-			run: extendToLineBounds
-		},
+        // X - extend to line bounds
+        {
+            key: 'Shift-x',
+            run: extendToLineBounds
+        },
 
-		// ====================================================================
-		// NORMAL MODE - EDITING
-		// ====================================================================
+        // ====================================================================
+        // NORMAL MODE - EDITING
+        // ====================================================================
 
-		// C - copy selection on next line
-		{
-			key: 'Shift-c',
-			run: copySelectionOnNextLine
-		},
+        // C - copy selection on next line
+        {
+            key: 'Shift-c',
+            run: copySelectionOnNextLine
+        },
 
-		// ====================================================================
-		// GOTO MODE
-		// ====================================================================
+        // ====================================================================
+        // GOTO MODE
+        // ====================================================================
 
-		// G - go to last line (or line number with count)
-		{
-			key: 'Shift-g',
-			run: (view) => gotoLine(view)
-		},
+        // G - go to last line (or line number with count)
+        {
+            key: 'Shift-g',
+            run: (view) => gotoLine(view)
+        },
 
-		// ====================================================================
-		// INSERT MODE - ENHANCED EDITING
-		// ====================================================================
+        // ====================================================================
+        // INSERT MODE - ENHANCED EDITING
+        // ====================================================================
 
-		// Ctrl-w - delete word backward
-		{
-			key: 'Ctrl-w',
-			run: deleteWordBackward
-		},
+        // Ctrl-w - delete word backward
+        {
+            key: 'Ctrl-w',
+            run: deleteWordBackward
+        },
 
-		// Alt-d - delete word forward
-		{
-			key: 'Alt-d',
-			run: deleteWordForward
-		},
+        // Alt-d - delete word forward
+        {
+            key: 'Alt-d',
+            run: deleteWordForward
+        },
 
-		// Ctrl-u - kill to line start
-		{
-			key: 'Ctrl-u',
-			run: killToLineStart
-		},
+        // Ctrl-u - kill to line start
+        {
+            key: 'Ctrl-u',
+            run: killToLineStart
+        },
 
-		// Ctrl-k - kill to line end
-		{
-			key: 'Ctrl-k',
-			run: killToLineEnd
-		},
+        // Ctrl-k - kill to line end
+        {
+            key: 'Ctrl-k',
+            run: killToLineEnd
+        },
 
-		// Ctrl-h - delete char backward (same as backspace)
-		{
-			key: 'Ctrl-h',
-			run: deleteCharBackwardCommand
-		},
+        // Ctrl-h - delete char backward (same as backspace)
+        {
+            key: 'Ctrl-h',
+            run: deleteCharBackwardCommand
+        },
 
-		// Ctrl-d - delete char forward (same as delete)
-		{
-			key: 'Ctrl-d',
-			run: deleteCharForwardCommand
-		}
-	]);
+        // Ctrl-d - delete char forward (same as delete)
+        {
+            key: 'Ctrl-d',
+            run: deleteCharForwardCommand
+        }
+    ]);
 }
