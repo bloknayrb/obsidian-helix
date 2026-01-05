@@ -66,5 +66,5 @@ Code is MIT licensed, compatible with MPL-2.0.
 
 ---
 
-Repository: https://github.com/obsidian-helix/obsidian-helix
+Reference implementation: https://github.com/obsidian-helix/obsidian-helix
 Contact: [your contact info]
