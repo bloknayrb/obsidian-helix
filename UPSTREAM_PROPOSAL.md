@@ -2,7 +2,7 @@
 
 ## Summary
 
-codemirror-helix v0.5.1 is missing several standard Helix commands. I have working implementations in TypeScript that use only CodeMirror APIs (no external dependencies). Would you accept a contribution adding these?
+codemirror-helix v0.5.1 is missing several standard Helix commands. I have working implementations that match your internal architecture exactly - they use your helper functions (cmdCount, mapSel, resetCount), integrate with your mode system, and follow your coding patterns. Would you accept a contribution?
 
 ## Missing Commands
 
@@ -30,11 +30,18 @@ codemirror-helix v0.5.1 is missing several standard Helix commands. I have worki
 
 ## Implementation Status
 
-All commands are implemented and tested in production use (obsidian-helix plugin). Code:
-- Uses only `@codemirror/state`, `@codemirror/view`, `@codemirror/commands`
-- ~750 lines of TypeScript
-- No external dependencies
-- Compatible with existing helix mode system
+All commands are implemented and tested in production (obsidian-helix plugin). The code has been refactored to match your architecture:
+- Uses your internal helpers: `cmdCount()`, `mapSel()`, `resetCount()`
+- Integrates with `MODE_EFF` constants and mode system
+- Follows your checkpoint pattern for undo/redo
+- Handles both Normal and Select modes correctly
+- ~450 lines of TypeScript (refactored from original)
+- Only depends on `@codemirror` packages you already use
+- Ready to copy directly into `src/lib.ts`
+
+**Files provided:**
+- `upstream-commands.ts` - Refactored commands matching your patterns
+- `INTEGRATION_GUIDE.md` - Step-by-step integration instructions
 
 ## Known Issues
 
@@ -42,16 +49,23 @@ All commands are implemented and tested in production use (obsidian-helix plugin
 - `s` - Current PR uses this for "select word at cursor", but v0.5.1 uses it for search input. Would need to pick one or use different key.
 
 ### Mode Detection
-Current implementation uses a workaround to detect insert mode (iterates through state fields). A proper exported API for mode detection would be cleaner:
-```typescript
-export function getMode(state: EditorState): ModeState
-```
+The refactored commands receive the `mode` parameter directly (following your pattern), eliminating the need for workarounds. Insert mode commands are placed in `helixCommandBindings.insert` which automatically ensures they only run in insert mode.
 
-## Files
+## Contribution Format
 
-Implementation can be provided as:
-1. Single PR with all commands, or
-2. Incremental PRs (word movement → selection → editing → insert mode)
+**Option 1: Direct integration** (recommended)
+- Commands are already written to match your codebase structure
+- Follow INTEGRATION_GUIDE.md to copy into `src/lib.ts`
+- Estimated integration time: 30-60 minutes
+
+**Option 2: Pull request**
+- I can submit PR with commands pre-integrated
+- Can be single PR or incremental (word movement → selection → editing → insert mode)
+
+**Option 3: Review first**
+- Review `upstream-commands.ts` to see if approach fits
+- Provide feedback on any changes needed
+- Then proceed with Option 1 or 2
 
 ## License
 
